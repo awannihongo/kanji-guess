@@ -122,5 +122,7 @@
 
 @theme {
 	--font-main: 'Inter', sans-serif;
-	--font-jp: 'Noto Sans JP', sans-serif;
+	--font-jp:
+		'Noto Sans JP', 'ヒラギノ角ゴ ProN', 'Hiragino Kaku Gothic ProN', '游ゴシック', 'Yu Gothic',
+		'メイリオ', Meiryo, 'ＭＳ ゴシック', 'MS Gothic', sans-serif;
 }
