@@ -35,6 +35,25 @@
 
 		return { score, percent };
 	});
+	let options: string[] = $derived.by(() => {
+		if (data.length === 0 || currentIndex > data.length - 1) {
+			return [];
+		}
+
+		const correct = data[currentIndex].jp;
+
+		const exclude = shuffleArray(
+			data.reduce<string[]>((previousValue, currentValue) => {
+				if (currentValue.jp !== correct) {
+					previousValue.push(currentValue.jp);
+				}
+				return previousValue;
+			}, [])
+		).slice(0, 3);
+
+		const result = shuffleArray([data[currentIndex].jp, ...exclude]);
+		return result;
+	});
 	let timeStart = $state(performance.now());
 	let timeEnd = $state(performance.now());
 	let isFlip = $state(false);
@@ -231,53 +250,19 @@
 				{/key}
 			</Button>
 		</div>
-		<div class="flex flex-row gap-2">
-			<Button
-				variant="outline"
-				class="grow text-xl"
-				size="lg"
-				onclick={() => {
-					answer(false);
-				}}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="32"
-					height="32"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="3"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="lucide lucide-x-icon lucide-x"
+		<div class="grid grid-flow-row grid-cols-2 gap-2">
+			{#each options as v}
+				<Button
+					variant="outline"
+					class="grow text-xl"
+					size="lg"
+					onclick={() => {
+						answer(v === currentData.jp);
+					}}
 				>
-					<path d="M18 6 6 18" /><path d="m6 6 12 12" />
-				</svg>
-			</Button>
-			<Button
-				variant="outline"
-				class="grow text-xl"
-				size="lg"
-				onclick={() => {
-					answer(true);
-				}}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="32"
-					height="32"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="3"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="lucide lucide-check-icon lucide-check"
-				>
-					<path d="M20 6 9 17l-5-5" />
-				</svg>
-			</Button>
+					{v}
+				</Button>
+			{/each}
 		</div>
 	{:else}
 		<div class="flex grow flex-col items-center justify-center gap-4">
