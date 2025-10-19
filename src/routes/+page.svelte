@@ -13,6 +13,8 @@
 		exampleJp: string;
 		exampleRomaji: string;
 		exampleIndonesia: string;
+
+		wrongAnswers: string[];
 	};
 
 	let data = $state<Data[]>([]);
@@ -40,16 +42,7 @@
 			return [];
 		}
 
-		const correct = data[currentIndex].jp;
-
-		const exclude = shuffleArray(
-			data.reduce<string[]>((previousValue, currentValue) => {
-				if (currentValue.jp !== correct) {
-					previousValue.push(currentValue.jp);
-				}
-				return previousValue;
-			}, [])
-		).slice(0, 3);
+		const exclude = shuffleArray(data[currentIndex].wrongAnswers).slice(0, 3);
 
 		const result = shuffleArray([data[currentIndex].jp, ...exclude]);
 		return result;
@@ -99,8 +92,16 @@
 					return previousValue;
 				}
 
-				const [kanji, jp, romaji, indonesia, exampleJp, exampleRomaji, exampleIndonesia] =
-					currentValue.split(',');
+				const [
+					kanji,
+					jp,
+					romaji,
+					indonesia,
+					exampleJp,
+					exampleRomaji,
+					exampleIndonesia,
+					wrongAnswers
+				] = currentValue.split(',');
 				previousValue.push({
 					kanji,
 					jp,
@@ -108,7 +109,8 @@
 					indonesia,
 					exampleJp,
 					exampleRomaji,
-					exampleIndonesia
+					exampleIndonesia,
+					wrongAnswers: wrongAnswers.split('|')
 				});
 
 				return previousValue;
