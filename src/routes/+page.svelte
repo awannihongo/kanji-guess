@@ -4,7 +4,7 @@
 	import JapaneseHighlight from '../components/JapaneseHighlight.svelte';
 	import { fade } from 'svelte/transition';
 
-	type Data = {
+	type DataCsv = {
 		kanji: string;
 		jp: string;
 		romaji: string;
@@ -17,16 +17,21 @@
 		wrongAnswers: string[];
 	};
 
-	let data = $state<Data[]>([]);
+	let data = $state<DataCsv[]>([]);
 	let answers = $state<(boolean | null)[]>([]);
 	let currentIndex = $state(0);
-	let currentData = $derived.by<Data | null>(() => {
+
+	let currentData = $derived.by<{
+		csv: DataCsv;
+		score: number;
+		percent: number;
+		options: string[];
+	} | null>(() => {
 		if (data.length === 0 || currentIndex > data.length - 1) {
 			return null;
 		}
-		return data[currentIndex];
-	});
-	let currentAnswer = $derived.by(() => {
+		const d = data[currentIndex];
+
 		const score = answers.reduce((previousValue, currentValue) => {
 			if (currentValue) {
 				previousValue += 1;
@@ -35,18 +40,17 @@
 		}, 0);
 		const percent = Math.floor((score / answers.length) * 100 || 0);
 
-		return { score, percent };
-	});
-	let options: string[] = $derived.by(() => {
-		if (data.length === 0 || currentIndex > data.length - 1) {
-			return [];
-		}
-
 		const exclude = shuffleArray(data[currentIndex].wrongAnswers).slice(0, 3);
+		const options = shuffleArray([data[currentIndex].jp, ...exclude]);
 
-		const result = shuffleArray([data[currentIndex].jp, ...exclude]);
-		return result;
+		return {
+			csv: d,
+			score,
+			percent,
+			options
+		};
 	});
+
 	let timeStart = $state(performance.now());
 	let timeEnd = $state(performance.now());
 	let isFlip = $state(false);
@@ -87,7 +91,7 @@
 				return;
 			}
 
-			const cleanData = items.reduce<Data[]>((previousValue, currentValue, i) => {
+			const cleanData = items.reduce<DataCsv[]>((previousValue, currentValue, i) => {
 				if (i === 0) {
 					return previousValue;
 				}
@@ -158,7 +162,7 @@
 				<div class="grow text-right">
 					<div class="text-2xl font-semibold tracking-tight uppercase">Skor</div>
 					<div class="text-xl font-medium tabular-nums">
-						{currentAnswer.score} / {data.length}
+						{currentData?.score} / {data.length}
 					</div>
 				</div>
 				<div class="grow">
@@ -169,7 +173,7 @@
 				</div>
 			</div>
 			<div class="text-center text-4xl font-semibold tracking-tight tabular-nums">
-				{currentAnswer.percent}%
+				{currentData?.percent}%
 			</div>
 			<div class="flex flex-col gap-2 text-center">
 				<div>
@@ -220,7 +224,7 @@
 						class:active={isFlip}
 						transition:fade
 					>
-						<div class="font-jp text-6xl md:text-8xl">{currentData.kanji}</div>
+						<div class="font-jp text-6xl md:text-8xl">{currentData.csv.kanji}</div>
 					</div>
 					<div
 						class="back absolute inset-0 flex flex-col justify-center transition-transform duration-300 backface-hidden"
@@ -230,21 +234,24 @@
 						<div class="flex flex-col gap-22">
 							<div class="flex flex-col gap-4">
 								<div class="px-4 text-center font-jp text-5xl text-red-500">
-									{currentData.kanji}
+									{currentData.csv.kanji}
 								</div>
-								<div class="px-4 text-center font-jp text-5xl">{currentData.jp}</div>
-								<div class="px-4 text-center text-4xl opacity-20">{currentData.romaji}</div>
-								<div class="px-4 text-center text-4xl">{currentData.indonesia}</div>
+								<div class="px-4 text-center font-jp text-5xl">{currentData.csv.jp}</div>
+								<div class="px-4 text-center text-4xl opacity-20">{currentData.csv.romaji}</div>
+								<div class="px-4 text-center text-4xl">{currentData.csv.indonesia}</div>
 							</div>
 							<div class="flex flex-col gap-2">
 								<div class="px-4 text-center font-jp text-2xl text-wrap">
-									<JapaneseHighlight string={currentData.exampleJp} target={currentData.kanji} />
+									<JapaneseHighlight
+										string={currentData.csv.exampleJp}
+										target={currentData.csv.kanji}
+									/>
 								</div>
 								<div class="px-4 text-center text-2xl text-wrap opacity-20">
-									{currentData.exampleRomaji}
+									{currentData.csv.exampleRomaji}
 								</div>
 								<div class="px-4 text-center text-2xl text-wrap">
-									{currentData.exampleIndonesia}
+									{currentData.csv.exampleIndonesia}
 								</div>
 							</div>
 						</div>
@@ -253,13 +260,13 @@
 			</Button>
 		</div>
 		<div class="grid grid-flow-row grid-cols-2 gap-2">
-			{#each options as v}
+			{#each currentData.options as v}
 				<Button
 					variant="outline"
 					class="grow text-xl"
 					size="lg"
 					onclick={() => {
-						answer(v === currentData.jp);
+						answer(v === currentData.csv.jp);
 					}}
 				>
 					{v}
